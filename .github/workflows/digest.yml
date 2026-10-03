@@ -1,0 +1,59 @@
+name: Tech News Digest
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 09:00 and 18:00 Asia/Kolkata in UTC.
+    - cron: "30 3,12 * * *"
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+  ARTICLES_PER_SOURCE: "2"
+  TIMEZONE: Asia/Kolkata
+  DIGEST_TIME_1: "09:00"
+  DIGEST_TIME_2: "18:00"
+  ENABLE_HACKERNEWS: "true"
+  ENABLE_LOBSTERS: "true"
+  ENABLE_DEVURLS: "true"
+  DEVURLS_FEED_URL: https://devurls.com/
+  TOPICS: Artificial Intelligence,Machine Learning,LLMs,Generative AI,AI agents,Software engineering,Programming,Developer tools,Open source,Cybersecurity,Startups,Cloud computing,DevOps,Infrastructure,Databases,Distributed systems,Web development,Backend engineering,Computer science,Robotics,Data engineering,Developer productivity
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out project
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Restore digest history
+        uses: actions/cache/restore@v4
+        with:
+          path: .digest-history.json
+          key: digest-history-${{ github.run_id }}
+          restore-keys: digest-history-
+
+      - name: Run digest
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: qwen/qwen3.8-27b:free
+          TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
+        run: python -m app.digest_job
+
+      - name: Save digest history
+        uses: actions/cache/save@v4
+        with:
+          path: .digest-history.json
+          key: digest-history-${{ github.run_id }}
