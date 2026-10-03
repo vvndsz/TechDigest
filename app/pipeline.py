@@ -25,8 +25,10 @@ class NewsPipeline:
         topics = topics or self.settings.topics
         enabled = [source for source in self.sources if self.settings.enabled_sources.get(source.name, True)]
         results = await asyncio.gather(*(self._fetch(source) for source in enabled))
+        log.info("Source candidate counts: %s", {source.name: len(batch) for source, batch in zip(enabled, results)})
         all_articles = deduplicate([article for batch in results for article in batch])
         fresh = self.history.unseen(all_articles)
+        log.info("Fresh candidate count after history and URL deduplication: %d", len(fresh))
         self.history.mark_processed(fresh)
         selected = rank_articles(filter_articles(fresh, topics), topics, per_source or self.settings.articles_per_source)
         chosen = [article for articles in selected.values() for article in articles]

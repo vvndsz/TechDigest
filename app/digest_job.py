@@ -42,12 +42,27 @@ async def run() -> None:
     service, client = build_service(settings)
     load_history(service)
     try:
+        telegram_url = f"https://api.telegram.org/bot{settings.telegram_token}"
+        bot_response = await client.get(f"{telegram_url}/getMe", timeout=30)
+        bot_data = bot_response.json()
+        if not bot_response.is_success or not bot_data.get("ok"):
+            raise RuntimeError(f"Telegram token rejected: {bot_data.get('description', 'unknown error')}")
+        log.info("Telegram bot authenticated as @%s", bot_data["result"].get("username", "unknown"))
+        for chat_id in chat_ids:
+            chat_response = await client.get(f"{telegram_url}/getChat", params={"chat_id": chat_id}, timeout=30)
+            chat_data = chat_response.json()
+            if not chat_response.is_success or not chat_data.get("ok"):
+                raise RuntimeError(f"Telegram chat ID {chat_id} rejected: {chat_data.get('description', 'unknown error')}")
+        log.info("Telegram chat validation passed for %d chat(s)", len(chat_ids))
         results = await service.generate(settings.topics, settings.articles_per_source)
-        telegram_url = f"https://api.telegram.org/bot{settings.telegram_token}/sendMessage"
+        log.info("Prepared %d article(s) for delivery", len(results))
+        send_url = f"{telegram_url}/sendMessage"
         for article, summary in results:
             for chat_id in chat_ids:
-                response = await client.post(telegram_url, json={"chat_id": chat_id, "text": format_article(article, summary), "parse_mode": "HTML", "disable_web_page_preview": True}, timeout=30)
-                response.raise_for_status()
+                response = await client.post(send_url, json={"chat_id": chat_id, "text": format_article(article, summary), "parse_mode": "HTML", "disable_web_page_preview": True}, timeout=30)
+                response_data = response.json()
+                if not response.is_success or not response_data.get("ok"):
+                    raise RuntimeError(f"Telegram delivery failed for chat {chat_id}: {response_data.get('description', 'unknown error')}")
             service.history.mark_delivered(article)
             log.info("Delivered %s", article.title)
         save_history(service)
