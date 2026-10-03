@@ -4,6 +4,7 @@ from app.filtering import topic_matches
 from app.models import Article, Summary
 from app.ranking import rank_articles
 from app.bot.formatter import format_article
+from app.config import Settings
 
 
 def article(title, url="https://example.com/a", source="Hacker News", score=0):
@@ -52,3 +53,11 @@ def test_formatter_stays_within_telegram_limit():
     value = article("A title")
     summary = Summary(value.title, value.source, "x" * 5000, ["point"], "matter", "details", ["AI"])
     assert len(format_article(value, summary)) <= 4096
+
+
+def test_settings_use_string_openrouter_defaults(monkeypatch):
+    monkeypatch.delenv("OPENROUTER_APP_URL", raising=False)
+    monkeypatch.delenv("OPENROUTER_APP_NAME", raising=False)
+    settings = Settings.from_env()
+    assert settings.openrouter_app_url == "http://localhost"
+    assert settings.openrouter_app_name == "Tech News Digest"

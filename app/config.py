@@ -12,6 +12,9 @@ DEFAULT_TOPICS = [
     "Backend engineering", "Computer science", "Robotics", "Data engineering",
     "Developer productivity",
 ]
+DEFAULT_OPENROUTER_MODEL = "qwen/qwen3.8-27b:free"
+DEFAULT_OPENROUTER_APP_URL = "http://localhost"
+DEFAULT_OPENROUTER_APP_NAME = "Tech News Digest"
 
 
 def _bool(name: str, default: bool) -> bool:
@@ -22,9 +25,9 @@ def _bool(name: str, default: bool) -> bool:
 class Settings:
     telegram_token: str
     openrouter_api_key: str
-    openrouter_model: str = "qwen/qwen3.8-27b:free"
-    openrouter_app_url: str = "http://localhost"
-    openrouter_app_name: str = "Tech News Digest"
+    openrouter_model: str = DEFAULT_OPENROUTER_MODEL
+    openrouter_app_url: str = DEFAULT_OPENROUTER_APP_URL
+    openrouter_app_name: str = DEFAULT_OPENROUTER_APP_NAME
     timezone: str = "UTC"
     digest_times: tuple[str, str] = ("09:00", "18:00")
     articles_per_source: int = 2
@@ -44,9 +47,9 @@ class Settings:
         return cls(
             telegram_token=os.getenv("TELEGRAM_BOT_TOKEN", ""),
             openrouter_api_key=os.getenv("OPENROUTER_API_KEY", ""),
-            openrouter_model=os.getenv("OPENROUTER_MODEL", cls.openrouter_model),
-            openrouter_app_url=os.getenv("OPENROUTER_APP_URL", cls.openrouter_app_url),
-            openrouter_app_name=os.getenv("OPENROUTER_APP_NAME", cls.openrouter_app_name),
+            openrouter_model=os.getenv("OPENROUTER_MODEL", DEFAULT_OPENROUTER_MODEL),
+            openrouter_app_url=os.getenv("OPENROUTER_APP_URL", DEFAULT_OPENROUTER_APP_URL),
+            openrouter_app_name=os.getenv("OPENROUTER_APP_NAME", DEFAULT_OPENROUTER_APP_NAME),
             timezone=os.getenv("TIMEZONE", "UTC"), digest_times=times,
             articles_per_source=max(1, int(os.getenv("ARTICLES_PER_SOURCE", "2"))),
             request_timeout=float(os.getenv("REQUEST_TIMEOUT_SECONDS", "20")),

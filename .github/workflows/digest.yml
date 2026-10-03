@@ -49,6 +49,8 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENROUTER_MODEL: qwen/qwen3.8-27b:free
+          OPENROUTER_APP_URL: https://github.com/${{ github.repository }}
+          OPENROUTER_APP_NAME: Tech News Digest
           TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
         run: python -m app.digest_job
 
